@@ -1,0 +1,30 @@
+name: Fetch public Windows build tools
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  tools:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download portable Wine and Inno Setup
+        shell: bash
+        run: |
+          set -euxo pipefail
+          curl -fL 'https://github.com/Kron4ek/Wine-Builds/releases/download/11.13/wine-11.13-amd64-wow64.tar.xz' -o wine.tar.xz
+          curl -fL 'https://github.com/jrsoftware/issrc/releases/download/is-6_7_3/innosetup-6.7.3.exe' -o innosetup-6.7.3.exe
+          sha256sum wine.tar.xz innosetup-6.7.3.exe
+      - name: Upload tools
+        uses: actions/upload-artifact@v4
+        with:
+          name: public-wine-inno-tools
+          path: |
+            wine.tar.xz
+            innosetup-6.7.3.exe
+          compression-level: 0
+          retention-days: 1
