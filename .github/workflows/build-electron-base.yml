@@ -1,0 +1,29 @@
+name: Build public Electron base
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - name: Download Electron Windows x64
+        shell: pwsh
+        run: |
+          $url = 'https://github.com/electron/electron/releases/download/v37.2.6/electron-v37.2.6-win32-x64.zip'
+          Invoke-WebRequest -UseBasicParsing -Uri $url -OutFile electron.zip
+          Expand-Archive -LiteralPath electron.zip -DestinationPath electron-base -Force
+          if (-not (Test-Path 'electron-base\electron.exe')) { throw 'electron.exe missing' }
+          Get-FileHash electron.zip -Algorithm SHA256 | Format-List
+      - name: Upload Electron runtime
+        uses: actions/upload-artifact@v4
+        with:
+          name: electron-v37.2.6-win32-x64-base
+          path: electron-base
+          compression-level: 0
+          retention-days: 1
