@@ -10,26 +10,19 @@ permissions:
 
 jobs:
   tools:
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     steps:
-      - name: Fetch Wine and extract Inno Setup compiler
-        shell: bash
+      - name: Install Inno Setup
+        shell: pwsh
         run: |
-          set -euxo pipefail
-          sudo apt-get update -qq
-          sudo apt-get install -y -qq innoextract
-          curl -fL 'https://github.com/Kron4ek/Wine-Builds/releases/download/11.13/wine-11.13-amd64-wow64.tar.xz' -o wine.tar.xz
-          curl -fL 'https://github.com/jrsoftware/issrc/releases/download/is-7_0_2/innosetup-7.0.2-x64.exe' -o innosetup.exe
-          mkdir inno7
-          innoextract -d inno7 innosetup.exe
-          find inno7 -iname ISCC.exe -print
-          test -n "$(find inno7 -iname ISCC.exe -print -quit)"
-      - name: Upload tools
+          choco install innosetup -y --no-progress
+          $dir = Join-Path ${env:ProgramFiles(x86)} 'Inno Setup 6'
+          if (-not (Test-Path (Join-Path $dir 'ISCC.exe'))) { throw "ISCC.exe not found: $dir" }
+          Copy-Item -LiteralPath $dir -Destination "$PWD\inno-setup" -Recurse -Force
+      - name: Upload Inno Setup compiler
         uses: actions/upload-artifact@v4
         with:
-          name: public-wine-inno7-extracted
-          path: |
-            wine.tar.xz
-            inno7
+          name: public-inno-setup-compiler
+          path: inno-setup
           compression-level: 0
           retention-days: 1
