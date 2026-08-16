@@ -12,19 +12,24 @@ jobs:
   tools:
     runs-on: ubuntu-latest
     steps:
-      - name: Download portable Wine and Inno Setup
+      - name: Fetch Wine and extract Inno Setup compiler
         shell: bash
         run: |
           set -euxo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq innoextract
           curl -fL 'https://github.com/Kron4ek/Wine-Builds/releases/download/11.13/wine-11.13-amd64-wow64.tar.xz' -o wine.tar.xz
-          curl -fL 'https://github.com/jrsoftware/issrc/releases/download/is-7_0_2/innosetup-7.0.2-x64.exe' -o innosetup-7.0.2-x64.exe
-          sha256sum wine.tar.xz innosetup-7.0.2-x64.exe
+          curl -fL 'https://github.com/jrsoftware/issrc/releases/download/is-7_0_2/innosetup-7.0.2-x64.exe' -o innosetup.exe
+          mkdir inno7
+          innoextract -d inno7 innosetup.exe
+          find inno7 -iname ISCC.exe -print
+          test -n "$(find inno7 -iname ISCC.exe -print -quit)"
       - name: Upload tools
         uses: actions/upload-artifact@v4
         with:
-          name: public-wine-inno7-tools
+          name: public-wine-inno7-extracted
           path: |
             wine.tar.xz
-            innosetup-7.0.2-x64.exe
+            inno7
           compression-level: 0
           retention-days: 1
