@@ -12,17 +12,21 @@ jobs:
   tools:
     runs-on: windows-latest
     steps:
-      - name: Install Inno Setup
+      - name: Install Inno Setup 7 x64
         shell: pwsh
         run: |
-          choco install innosetup -y --no-progress
-          $dir = Join-Path ${env:ProgramFiles(x86)} 'Inno Setup 6'
-          if (-not (Test-Path (Join-Path $dir 'ISCC.exe'))) { throw "ISCC.exe not found: $dir" }
-          Copy-Item -LiteralPath $dir -Destination "$PWD\inno-setup" -Recurse -Force
-      - name: Upload Inno Setup compiler
+          $ErrorActionPreference = 'Stop'
+          Invoke-WebRequest -UseBasicParsing -Uri 'https://github.com/jrsoftware/issrc/releases/download/is-7_0_2/innosetup-7.0.2-x64.exe' -OutFile inno7.exe
+          $dest = Join-Path $PWD 'installed-inno7'
+          $p = Start-Process -FilePath "$PWD\inno7.exe" -ArgumentList @('/VERYSILENT','/SUPPRESSMSGBOXES','/NORESTART','/SP-',("/DIR=$dest")) -Wait -PassThru
+          if ($p.ExitCode -ne 0) { throw "Inno Setup installer failed: $($p.ExitCode)" }
+          $iscc = Join-Path $dest 'ISCC.exe'
+          if (-not (Test-Path $iscc)) { throw "ISCC.exe not found: $iscc" }
+          Get-Item $iscc | Format-List FullName,Length
+      - name: Upload Inno Setup x64 compiler
         uses: actions/upload-artifact@v4
         with:
-          name: public-inno-setup-compiler
-          path: inno-setup
+          name: public-inno7-x64-compiler
+          path: installed-inno7
           compression-level: 0
           retention-days: 1
